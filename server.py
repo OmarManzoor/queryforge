@@ -30,7 +30,7 @@ from schemas import ChatMessage, PrepareRequest, OptimizedQuery
 # ✏️  Configuration — edit these two lines to change the model
 # ---------------------------------------------------------------------------
 PROVIDER = LLMProvider.MLX
-MODEL = LLMModel.QWEN_3B_INSTRUCT
+MODEL = LLMModel.QWEN_3B_INSTRUCT_4_BIT
 # ---------------------------------------------------------------------------
 
 optimizer: QueryOptimizer | None = None

@@ -35,7 +35,7 @@ def download_model(repo_id: str, local_name: str = None):
 
 if __name__ == "__main__":
     print("You can download one of the following models that are currently supported:")
-    for i, model_repo_name in enumerate(AVAILABLE_MODELS, 1):
+    for i, model_repo_name in enumerate(AVAILABLE_MODELS):
         print(f"{i} - {model_repo_name}")
     
     print("\nPlease type only the single model number NOT the name.")

@@ -44,7 +44,7 @@ multi_query_with_context:
 
 hyde_with_context:
   system: |
-    You are a technical document writer. Write a short, highly accurate excerpt (under 60 words) that directly answers the query as if it were taken from an official reference manual.
+    You are a technical document writer. Write a short, highly accurate excerpt (under 50 words) that directly answers the query as if it were taken from an official reference manual.
     Do NOT use lists, bullet points, or multiple paragraphs.
     Do NOT include meta-commentary like "Here is the answer".
     Resolve pronouns (this, it, that) using the history to rewrite the question into a clear 'standalone_query' of 5 to 8 words.
