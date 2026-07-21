@@ -6,16 +6,17 @@ import asyncio
 from transformers import pipeline
 from typing import Any, Dict, Optional
 
-from config import LLMProvider, LLMModel
+from config import LLMProvider, LLMModel, AVAILABLE_MODELS
 from schemas import ChatMessage, OptimizedQuery, DensePayload, SparsePayload
 
 
 class QueryOptimizer:
     def __init__(self, provider: str, model_name: str):
-        if provider not in (LLMProvider.HUGGINGFACE, LLMProvider.MLX):
+        if provider not in (LLMProvider.HUGGINGFACE, LLMProvider.MLX, LLMProvider.LLAMA):
             raise ValueError(f"{provider} provider is currently not supported")
 
-        if model_name not in (LLMModel.QWEN_3B_INSTRUCT, LLMModel.LLAMA_3B_INSTRUCT):
+        available_model_names = set(model.split("/")[-1] for model in AVAILABLE_MODELS)
+        if model_name not in available_model_names:
             raise ValueError(f"{model_name} is current not supported")
         
         if provider == LLMProvider.HUGGINGFACE:
@@ -24,6 +25,9 @@ class QueryOptimizer:
         elif provider == LLMProvider.MLX:
             from llm import MLXEngine
             self.llm_engine = MLXEngine(model_name)
+        elif provider == LLMProvider.LLAMA:
+            from llm import LlamaMLXEngine
+            self.llm_engine = LlamaMLXEngine(model_name)
         with open("./prompts.yaml", "r") as f:
             self.prompts = yaml.safe_load(f)
 
@@ -32,8 +36,7 @@ class QueryOptimizer:
         raw_response = self.llm_engine.generate(
             system_prompt=self.prompts.get("intent", ""),
             user_prompt=query,
-            max_tokens=10,
-            temperature=0.0
+            temperature=0.1
         )
         intent = raw_response.strip().upper()
         if "EXACT_MATCH" in intent:
@@ -45,14 +48,13 @@ class QueryOptimizer:
 
     def generate_multi_queries(self, query: str, history: str) -> list[str]:
         """Expands a single query into 3 distinct search variations."""
-        user_prompt = self.prompts["multi_query_v1"]["user_template"].format(
+        user_prompt = self.prompts["multi_query_with_context"]["user_template"].format(
             query=query,
             history=history.strip(),
         )
         raw_response = self.llm_engine.generate(
-            system_prompt=self.prompts["multi_query_v1"]["system"],
+            system_prompt=self.prompts["multi_query_with_context"]["system"],
             user_prompt=user_prompt,
-            max_tokens=80,
         )
         # Defensive JSON Parsing
         try:
@@ -85,15 +87,14 @@ class QueryOptimizer:
 
     def generate_hyde(self, query: str, history: str = "None") -> Dict[str, Any]:
         """Generates a hypothetical ideal document answering the query using context."""
-        user_prompt = self.prompts["hyde_v1"]["user_template"].format(
+        user_prompt = self.prompts["hyde_with_context"]["user_template"].format(
             query=query,
             history=history.strip()
         )
 
         raw_response = self.llm_engine.generate(
-            system_prompt=self.prompts["hyde_v1"]["system"],
+            system_prompt=self.prompts["hyde_with_context"]["system"],
             user_prompt=user_prompt,
-            max_tokens=80,
         )
 
         # Defensive JSON Parsing
@@ -125,7 +126,6 @@ class QueryOptimizer:
         raw_response = self.llm_engine.generate(
             system_prompt=self.prompts.get("keyword_extraction", ""),
             user_prompt=query,
-            max_tokens=30,
             temperature=0.1
         )
         clean_text = re.sub(r'[*"`\d\.]', '', raw_response)
