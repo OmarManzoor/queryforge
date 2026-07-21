@@ -147,4 +147,3 @@ class LlamaMLXEngine(BaseEngine):
             verbose=False
         )
         return response.strip()
-    
