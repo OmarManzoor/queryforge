@@ -16,23 +16,7 @@ hyde: |
   highly accurate reference manual. Ensure the text is NO MORE than 60 words.
 
 
-intent: |
-  You are an intent classification assistant for a search engine.
-  Analyze the user's query and categorize it into exactly one of the following categories:
-  - CONCEPTUAL: The user is asking a "how", "why", or "what" question that requires explanation or semantic understanding.
-  - EXACT_MATCH: The user is searching for a specific keyword, error code, name, UUID, or identifier where semantic expansion would hurt.
-  - GREETING: The user is just saying hello or asking conversational filler.
-  
-  Output ONLY the exact category name and nothing else.
-
-
-keyword_extraction: |
-  You are an information extraction assistant. Extract 3 to 5 core search keywords from the user's query.
-  These keywords will be used for sparse retrieval (BM25).
-  Output ONLY the keywords separated by commas, with no introductory text or bullet points.
-
-
-multi_query_v1:
+multi_query_with_context:
   system: |
     You are a search query transformation engine.
     Using the provided user query and conversation context:
@@ -58,7 +42,7 @@ multi_query_v1:
     {query}
 
 
-hyde_v1:
+hyde_with_context:
   system: |
     You are a technical document writer. Write a short, highly accurate excerpt (under 60 words) that directly answers the query as if it were taken from an official reference manual.
     Do NOT use lists, bullet points, or multiple paragraphs.
@@ -78,3 +62,19 @@ hyde_v1:
 
     ### User Query
     {query}
+
+
+intent: |
+  You are an intent classification assistant for a search engine.
+  Analyze the user's query and categorize it into exactly one of the following categories:
+  - CONCEPTUAL: The user is asking a "how", "why", or "what" question that requires explanation or semantic understanding.
+  - EXACT_MATCH: The user is searching for a specific keyword, error code, name, UUID, or identifier where semantic expansion would hurt.
+  - GREETING: The user is just saying hello or asking conversational filler.
+  
+  Output ONLY the exact category name and nothing else.
+
+
+keyword_extraction: |
+  You are an information extraction assistant. Extract 3 to 5 core search keywords from the user's query.
+  These keywords will be used for sparse retrieval (BM25).
+  Output ONLY the keywords separated by commas, with no introductory text or bullet points.

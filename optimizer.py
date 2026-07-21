@@ -177,8 +177,8 @@ class QueryOptimizer:
         formatted = []
         for msg in history:
             if msg.role == "user":
-                formatted.append(f"The user said: {msg.content}")
+                formatted.append(f"The USER said: {msg.content}")
             else:
-                formatted.append(f"The assistant responded: {msg.content}")
+                formatted.append(f"The ASSISTANT responded: {msg.content}")
         
         return " ".join(formatted)
