@@ -18,14 +18,13 @@ Interactive API docs: http://localhost:8000/docs
 
 import uvicorn
 from contextlib import asynccontextmanager
-from typing import Literal
+from typing import Literal, Optional
 
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
 
 from config import LLMProvider, LLMModel
 from optimizer import QueryOptimizer
-from schemas import OptimizedQuery
+from schemas import ChatMessage, PrepareRequest, OptimizedQuery
 
 # ---------------------------------------------------------------------------
 # ✏️  Configuration — edit these two lines to change the model
@@ -57,16 +56,6 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-
-# ---------------------------------------------------------------------------
-# Request / Response models
-# ---------------------------------------------------------------------------
-
-class PrepareRequest(BaseModel):
-    query: str
-    strategy: Literal["multi_query", "hyde"] = "multi_query"
-
-
 # ---------------------------------------------------------------------------
 # Routes
 # ---------------------------------------------------------------------------
@@ -83,8 +72,8 @@ async def prepare_query(request: PrepareRequest) -> OptimizedQuery:
     Transforms a raw user query into an optimized retrieval payload.
 
     - **query**: The raw user query string.
-    - **strategy**: `multi_query` (default) generates 3 alternative search phrases.
-                    `hyde` generates a hypothetical ideal document for dense retrieval.
+    - **strategy**: `multi_query` (default) or `hyde`.
+    - **history**: (Optional) Recent message history for context resolution.
     """
     if optimizer is None:
         raise HTTPException(status_code=503, detail="Model not loaded yet.")
@@ -92,6 +81,7 @@ async def prepare_query(request: PrepareRequest) -> OptimizedQuery:
     result = await optimizer.prepare_query(
         query=request.query,
         strategy=request.strategy,
+        history=request.history,
     )
     return result
 

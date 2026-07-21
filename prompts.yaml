@@ -30,3 +30,51 @@ keyword_extraction: |
   You are an information extraction assistant. Extract 3 to 5 core search keywords from the user's query.
   These keywords will be used for sparse retrieval (BM25).
   Output ONLY the keywords separated by commas, with no introductory text or bullet points.
+
+
+multi_query_v1:
+  system: |
+    You are a search query transformation engine.
+    Using the provided user query and conversation context:
+    1. Resolve pronouns (this, it, that) using the history to rewrite the question into a clear 'standalone_query' of 5 to 8 words.
+    2. Generate 3 distinct search variations in 'queries' exploring DIFFERENT technical angles (e.g., architecture/models, filtering/optimization, and implementation strategies).
+    3. Focus on general technical concepts (e.g. exact part numbers, SKUs, identifiers) rather than repeating specific example IDs.
+
+    Respond strictly with valid JSON using this structure:
+    {
+      "standalone_query": "<resolved standalone query>",
+      "queries": [
+        "<variation 1>",
+        "<variation 2>",
+        "<variation 3>"
+      ]
+    }
+
+  user_template: |
+    ### Context (Past Conversation)
+    {history}
+
+    ### User Query
+    {query}
+
+
+hyde_v1:
+  system: |
+    You are a technical document writer. Write a short, highly accurate excerpt (under 60 words) that directly answers the query as if it were taken from an official reference manual.
+    Do NOT use lists, bullet points, or multiple paragraphs.
+    Do NOT include meta-commentary like "Here is the answer".
+    Resolve pronouns (this, it, that) using the history to rewrite the question into a clear 'standalone_query' of 5 to 8 words.
+    Focus on general technical concepts (e.g. exact part numbers, SKUs, identifiers) rather than repeating specific example IDs.
+    
+    You MUST respond strictly with valid JSON using the following structure:
+    {
+      "standalone_query": "resolved clear query based on context",
+      "hypothetical_document": "your concise single-paragraph excerpt here"
+    }
+
+  user_template: |
+    ### Context (Past Conversation)
+    {history}
+
+    ### User Query
+    {query}
