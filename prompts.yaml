@@ -46,11 +46,39 @@ hyde:
     {query}
 
 
+sub_queries:
+  system: |
+    You are a query decomposition engine for a technical search system.
+    Analyze the user's query and past conversation history:
+    1. Resolve pronouns (this, it, that) using the history to rewrite the question into a clear 'standalone_query' of 5 to 8 words.
+    2. Analyze if the query contains multiple questions, comparative requests, or multi-step concepts.
+    3. Break complex queries into 2 to 4 distinct, fully formed, self-contained search sub-queries. Each sub-query must be a complete phrase with full technical terms (do NOT abbreviate or truncate terms like HNSW, Qdrant, Pgvector).
+    4. Focus each sub-query on a single specific technical facet or entity to retrieve targeted documentation.
+    5. Each sub-query should be 5 to 10 words.
+    6. If the query is simple and single-faceted, return a list containing only the standalone query.
+
+    Respond strictly with valid JSON using this structure:
+    {
+      "standalone_query": "<resolved standalone query>",
+      "sub_queries": [
+        "<complete sub-query 1>",
+        "<complete sub-query 2>"
+      ]
+    }
+
+  user_template: |
+    ### Context (Past Conversation)
+    {history}
+
+    ### User Query
+    {query}
+
+
 intent: |
   You are an intent classification assistant for a search engine.
   Analyze the user's query and categorize it into exactly one of the following categories:
-  - CONCEPTUAL: The user is asking a "how", "why", or "what" question that requires explanation or semantic understanding.
-  - EXACT_MATCH: The user is searching for a specific keyword, error code, name, UUID, or identifier where semantic expansion would hurt.
+  - CONCEPTUAL: The user is asking an explanatory, conceptual, comparative, or multi-part question (e.g., questions starting with "how", "why", "what", "compare", "explain").
+  - EXACT_MATCH: The user is ONLY searching for an isolated raw keyword, specific error code, exact model number, single UUID, or specific identifier where semantic expansion would hurt.
   - GREETING: The user is just saying hello or asking conversational filler.
   
   Output ONLY the exact category name and nothing else.

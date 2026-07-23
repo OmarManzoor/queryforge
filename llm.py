@@ -92,7 +92,7 @@ class LlamaMLXEngine(BaseEngine):
     worker thread to prevent MLX cross-thread Stream(gpu, N) errors.
     """
     def __init__(self, model_name: str):
-        super().__init__(new_token_count=128)
+        super().__init__(new_token_count=150)
         self.model_name = model_name
         self.model_path = f"./{LOCAL_MODELS_DIR}/{self.model_name}"
         
