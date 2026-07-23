@@ -120,16 +120,40 @@ class QueryOptimizer:
                 "hypothetical_document": raw_response.strip() if raw_response else query
             }
 
-    def extract_keywords(self, query: str) -> list[str]:
-        """Extracts search keywords for sparse retrieval."""
-        raw_response = self.llm_engine.generate(
-            system_prompt=self.prompts.get("keyword_extraction", ""),
-            user_prompt=query,
-            temperature=0.1
+    def generate_sub_queries(self, query: str, history: str) -> Dict[str, Any]:
+        """Decomposes a complex query into atomic sub-queries."""
+        user_prompt = self.prompts["sub_queries"]["user_template"].format(
+            query=query,
+            history=history.strip(),
         )
-        clean_text = re.sub(r'[*"`\d\.]', '', raw_response)
-        keywords = [k.strip() for k in clean_text.split(",") if k.strip()]
-        return keywords
+        raw_response = self.llm_engine.generate(
+            system_prompt=self.prompts["sub_queries"]["system"],
+            user_prompt=user_prompt,
+        )
+        try:
+            clean_json_str = repair_json(raw_response)
+            data = json.loads(clean_json_str)
+
+            standalone_query = data.get("standalone_query", query)
+            sub_queries = data.get("sub_queries", [query])
+
+            if not isinstance(sub_queries, list) or not sub_queries:
+                sub_queries = [query]
+
+            clean_sub_queries = [
+                q.strip() for q in sub_queries 
+                if isinstance(q, str) and q.strip()
+            ]
+
+            return {
+                "standalone_query": standalone_query,
+                "sub_queries": clean_sub_queries if clean_sub_queries else [query]
+            }
+        except Exception:
+            return {
+                "standalone_query": query,
+                "sub_queries": [query]
+            }
 
     async def prepare_query(
         self,
@@ -158,6 +182,10 @@ class QueryOptimizer:
                 res = await asyncio.to_thread(self.generate_hyde, query, history_)
                 standalone_query = res.get("standalone_query", query)
                 dense_payload.hyde_document = res.get("hypothetical_document")
+            elif strategy == "sub_queries":
+                res = await asyncio.to_thread(self.generate_sub_queries, query, history_)
+                standalone_query = res.get("standalone_query", query)
+                dense_payload.sub_queries = res.get("sub_queries")
             else:
                 raise ValueError(f"Unknown strategy: {strategy}")
             
@@ -181,3 +209,16 @@ class QueryOptimizer:
                 formatted.append(f"The ASSISTANT responded: {msg.content}")
         
         return " ".join(formatted)
+
+    # Currently not used but could be useful
+    def extract_keywords(self, query: str) -> list[str]:
+        """Extracts search keywords for sparse retrieval."""
+        raw_response = self.llm_engine.generate(
+            system_prompt=self.prompts.get("keyword_extraction", ""),
+            user_prompt=query,
+            temperature=0.1
+        )
+        clean_text = re.sub(r'[*"`\d\.]', '', raw_response)
+        keywords = [k.strip() for k in clean_text.split(",") if k.strip()]
+        return keywords
+

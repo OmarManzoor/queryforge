@@ -16,7 +16,7 @@ class PrepareRequest(BaseModel):
         ...,
         description="The current/latest raw user query string.",
     )
-    strategy: Literal["multi_query", "hyde"] = Field(
+    strategy: Literal["multi_query", "hyde", "sub_queries"] = Field(
         default="multi_query",
         description="Transformation strategy to apply.",
     )
@@ -33,6 +33,7 @@ class PrepareRequest(BaseModel):
 class DensePayload(BaseModel):
     queries: Optional[List[str]] = None
     hyde_document: Optional[str] = None
+    sub_queries: Optional[List[str]] = None
 
 
 class SparsePayload(BaseModel):

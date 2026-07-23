@@ -18,13 +18,12 @@ Interactive API docs: http://localhost:8000/docs
 
 import uvicorn
 from contextlib import asynccontextmanager
-from typing import Literal, Optional
 
 from fastapi import FastAPI, HTTPException
 
 from config import LLMProvider, LLMModel
 from optimizer import QueryOptimizer
-from schemas import ChatMessage, PrepareRequest, OptimizedQuery
+from schemas import PrepareRequest, OptimizedQuery
 
 # ---------------------------------------------------------------------------
 # ✏️  Configuration — edit these two lines to change the model
