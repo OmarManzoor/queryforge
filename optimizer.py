@@ -3,10 +3,9 @@ from json_repair import repair_json
 import re
 import yaml
 import asyncio
-from transformers import pipeline
 from typing import Any, Dict, Optional
 
-from config import LLMProvider, LLMModel, AVAILABLE_MODELS
+from config import LLMProvider, AVAILABLE_MODELS
 from schemas import ChatMessage, OptimizedQuery, DensePayload, SparsePayload
 
 
@@ -18,7 +17,7 @@ class QueryOptimizer:
         available_model_names = set(model.split("/")[-1] for model in AVAILABLE_MODELS)
         if model_name not in available_model_names:
             raise ValueError(f"{model_name} is current not supported")
-        
+
         if provider == LLMProvider.HUGGINGFACE:
             from llm import HuggingFaceEngine
             self.llm_engine = HuggingFaceEngine(model_name)
@@ -48,12 +47,12 @@ class QueryOptimizer:
 
     def generate_multi_queries(self, query: str, history: str) -> list[str]:
         """Expands a single query into 3 distinct search variations."""
-        user_prompt = self.prompts["multi_query_with_context"]["user_template"].format(
+        user_prompt = self.prompts["multi_query"]["user_template"].format(
             query=query,
             history=history.strip(),
         )
         raw_response = self.llm_engine.generate(
-            system_prompt=self.prompts["multi_query_with_context"]["system"],
+            system_prompt=self.prompts["multi_query"]["system"],
             user_prompt=user_prompt,
         )
         # Defensive JSON Parsing
@@ -87,13 +86,13 @@ class QueryOptimizer:
 
     def generate_hyde(self, query: str, history: str = "None") -> Dict[str, Any]:
         """Generates a hypothetical ideal document answering the query using context."""
-        user_prompt = self.prompts["hyde_with_context"]["user_template"].format(
+        user_prompt = self.prompts["hyde"]["user_template"].format(
             query=query,
             history=history.strip()
         )
 
         raw_response = self.llm_engine.generate(
-            system_prompt=self.prompts["hyde_with_context"]["system"],
+            system_prompt=self.prompts["hyde"]["system"],
             user_prompt=user_prompt,
         )
 

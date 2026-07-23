@@ -1,22 +1,4 @@
-multi_query: |
-  You are a search query assistant. The user will give you a query. 
-  You must output exactly 3 distinct alternative search phrases
-  that would help a search engine understand and find relevant documents.
-  The phrases should be such that they really help faciliate retrieval of
-  relevant and useful content. Don't use underscores '_' or hyphens '-' to
-  separate words. Instead use ONLY spaces.
-  Output ONLY the phrases separated by commas for example:
-  phrase number 1, phrase number 2, phrase number 3
-
-
-hyde: |
-  You are a helpful assistant writing technical documentation. Write exactly ONE SHORT PARAGRAPH
-  directly answering the user's question. Do not use lists, bullet points, or multiple paragraphs.
-  Do not say 'Here is an answer' or 'I think'.  Write it as if it were a direct excerpt from a
-  highly accurate reference manual. Ensure the text is NO MORE than 60 words.
-
-
-multi_query_with_context:
+multi_query:
   system: |
     You are a search query transformation engine.
     Using the provided user query and conversation context:
@@ -42,7 +24,7 @@ multi_query_with_context:
     {query}
 
 
-hyde_with_context:
+hyde:
   system: |
     You are a technical document writer. Write a short, highly accurate excerpt (under 50 words) that directly answers the query as if it were taken from an official reference manual.
     Do NOT use lists, bullet points, or multiple paragraphs.
