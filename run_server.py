@@ -22,7 +22,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException
 
 from config import LLMProvider, LLMModel
-from optimizer import QueryOptimizer
+from optimizer import QueryOptimizer, setup_nltk
 from schemas import PrepareRequest, OptimizedQuery
 
 # ---------------------------------------------------------------------------
@@ -39,6 +39,8 @@ optimizer: QueryOptimizer | None = None
 async def lifespan(app: FastAPI):
     """Load the model on startup; clean up on shutdown."""
     global optimizer
+    print("Setting up NLTK datasets...")
+    setup_nltk()
     print(f"Loading model '{MODEL}' with provider '{PROVIDER}'...")
     optimizer = QueryOptimizer(provider=PROVIDER, model_name=MODEL)
     print("Model loaded. Server is ready.")

@@ -26,3 +26,28 @@ AVAILABLE_MODELS = [
 LOCAL_MODELS_DIR = "local_models"
 
 STANDARD_NEW_TOKEN_COUNT = 100
+
+ACTION_STOPWORDS = {
+    "apply",
+    "can",
+    "clean",
+    "do",
+    "find",
+    "fix",
+    "get",
+    "give",
+    "help",
+    "make",
+    "need",
+    "prevent",
+    "provide",
+    "remove",
+    "repair",
+    "show",
+    "solve",
+    "stop",
+    "tell",
+    "try",
+    "use",
+    "want",
+}
