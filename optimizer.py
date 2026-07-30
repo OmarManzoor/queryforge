@@ -3,10 +3,20 @@ from json_repair import repair_json
 import re
 import yaml
 import asyncio
+import nltk
+from nltk.tokenize import word_tokenize
+from nltk.corpus import stopwords
 from typing import Any, Dict, Optional
 
-from config import LLMProvider, AVAILABLE_MODELS
+from config import LLMProvider, AVAILABLE_MODELS, ACTION_STOPWORDS
 from schemas import ChatMessage, OptimizedQuery, DensePayload, SparsePayload
+
+
+def setup_nltk():
+    resources = ['punkt', 'punkt_tab', 'stopwords', 'averaged_perceptron_tagger', 'averaged_perceptron_tagger_eng']
+    for resource in resources:
+        nltk.download(resource, quiet=True)
+
 
 
 class QueryOptimizer:
@@ -45,7 +55,7 @@ class QueryOptimizer:
         else:
             return "CONCEPTUAL"
 
-    def generate_multi_queries(self, query: str, history: str) -> list[str]:
+    def generate_multi_queries(self, query: str, history: str = "None") -> Dict[str, Any]:
         """Expands a single query into 3 distinct search variations."""
         user_prompt = self.prompts["multi_query"]["user_template"].format(
             query=query,
@@ -120,7 +130,7 @@ class QueryOptimizer:
                 "hypothetical_document": raw_response.strip() if raw_response else query
             }
 
-    def generate_sub_queries(self, query: str, history: str) -> Dict[str, Any]:
+    def generate_sub_queries(self, query: str, history: str = "None") -> Dict[str, Any]:
         """Decomposes a complex query into atomic sub-queries."""
         user_prompt = self.prompts["sub_queries"]["user_template"].format(
             query=query,
@@ -154,6 +164,32 @@ class QueryOptimizer:
                 "standalone_query": query,
                 "sub_queries": [query]
             }
+    
+    def extract_keywords(self, query: str) -> list[str]:
+        """
+        Extracts multi-word phrases and key noun terms from a text query using NLTK.
+        """
+        tokens = word_tokenize(query)
+        tagged_tokens = nltk.pos_tag(tokens)
+
+        # Define Chunk Grammar:
+        # Captures optional Adjectives (JJ*) followed by 1 or more Nouns (NN*)
+        # This automatically captures phrases like "expensive car", "New York", or "cheap laptops"
+        grammar = r"""
+            KEY_PHRASE: {<JJ|JJR|JJS|NNP|NNPS|NN|NNS>*<NNP|NNPS|NN|NNS>+}
+        """
+        chunk_parser = nltk.RegexpParser(grammar)
+        tree = chunk_parser.parse(tagged_tokens)
+        stop_words = set(stopwords.words('english')).union(ACTION_STOPWORDS)
+        keywords = []
+        
+        for subtree in tree.subtrees(filter=lambda t: t.label() == 'KEY_PHRASE'):
+            phrase_words = [word.lower() for word, tag in subtree.leaves() if word.isalnum()]
+            cleaned_words = [w for w in phrase_words if w not in stop_words]
+            if cleaned_words:
+                keywords.append(" ".join(cleaned_words))
+
+        return list(dict.fromkeys(keywords))
 
     async def prepare_query(
         self,
@@ -188,7 +224,10 @@ class QueryOptimizer:
                 dense_payload.sub_queries = res.get("sub_queries")
             else:
                 raise ValueError(f"Unknown strategy: {strategy}")
-            
+
+        if intent != "GREETING":  # this does not make sense for greeting type queries
+            sparse_payload.keywords = self.extract_keywords(query=standalone_query)
+
         return OptimizedQuery(
             original_query=query,
             standalone_query=standalone_query,
@@ -209,16 +248,4 @@ class QueryOptimizer:
                 formatted.append(f"The ASSISTANT responded: {msg.content}")
         
         return " ".join(formatted)
-
-    # Currently not used but could be useful
-    def extract_keywords(self, query: str) -> list[str]:
-        """Extracts search keywords for sparse retrieval."""
-        raw_response = self.llm_engine.generate(
-            system_prompt=self.prompts.get("keyword_extraction", ""),
-            user_prompt=query,
-            temperature=0.1
-        )
-        clean_text = re.sub(r'[*"`\d\.]', '', raw_response)
-        keywords = [k.strip() for k in clean_text.split(",") if k.strip()]
-        return keywords
 

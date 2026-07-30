@@ -83,8 +83,3 @@ intent: |
   
   Output ONLY the exact category name and nothing else.
 
-
-keyword_extraction: |
-  You are an information extraction assistant. Extract 3 to 5 core search keywords from the user's query.
-  These keywords will be used for sparse retrieval (BM25).
-  Output ONLY the keywords separated by commas, with no introductory text or bullet points.

@@ -16,7 +16,6 @@ import pytest_asyncio
 
 from schemas import DensePayload, OptimizedQuery, SparsePayload
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -126,51 +125,63 @@ class TestQueryOptimizerParsing:
         optimizer = _make_optimizer(mock_engine)
         assert optimizer.classify_intent("error code 404") == "EXACT_MATCH"
 
-    def test_generate_multi_queries_parses_comma_list(self):
-        """generate_multi_queries should split a comma-separated LLM response into a list."""
+    def test_generate_multi_queries_parses_json_response(self):
+        """generate_multi_queries should parse JSON response into dict with standalone_query and queries list."""
         mock_engine = MagicMock()
-        mock_engine.generate.return_value = "slow python loops, python performance tips, optimize python code"
+        mock_engine.generate.return_value = '{"standalone_query": "Why is Python slow?", "queries": ["slow python loops", "python performance tips", "optimize python code"]}'
         optimizer = _make_optimizer(mock_engine)
         result = optimizer.generate_multi_queries("Why is Python slow?")
-        assert isinstance(result, list)
-        assert len(result) == 3
-        assert "slow python loops" in result
+        assert isinstance(result, dict)
+        assert len(result["queries"]) == 3
+        assert "slow python loops" in result["queries"]
 
     def test_generate_multi_queries_caps_at_three(self):
         """generate_multi_queries should return at most 3 queries even if LLM returns more."""
         mock_engine = MagicMock()
-        mock_engine.generate.return_value = "a, b, c, d, e"
+        mock_engine.generate.return_value = '{"standalone_query": "query", "queries": ["a", "b", "c", "d", "e"]}'
         optimizer = _make_optimizer(mock_engine)
         result = optimizer.generate_multi_queries("query")
-        assert len(result) <= 3
+        assert len(result["queries"]) <= 3
 
     def test_generate_multi_queries_fallback_on_empty(self):
-        """generate_multi_queries should return [original_query] if parsing fails."""
+        """generate_multi_queries should fallback to original query if parsing fails."""
         mock_engine = MagicMock()
         mock_engine.generate.return_value = "  "  # whitespace only
         optimizer = _make_optimizer(mock_engine)
         result = optimizer.generate_multi_queries("my query")
-        assert result == ["my query"]
+        assert result == {"standalone_query": "my query", "queries": ["my query"]}
 
-    def test_generate_multi_queries_strips_markdown(self):
-        """generate_multi_queries should strip markdown characters like *, `, numbers."""
-        mock_engine = MagicMock()
-        mock_engine.generate.return_value = "**slow python**, `memory leak`, 1. bad loops"
-        optimizer = _make_optimizer(mock_engine)
-        result = optimizer.generate_multi_queries("Python slow?")
-        for q in result:
-            assert "*" not in q
-            assert "`" not in q
-
-    def test_extract_keywords_parses_comma_list(self):
-        """extract_keywords should return a list of individual keyword strings."""
-        mock_engine = MagicMock()
-        mock_engine.generate.return_value = "python, slow, performance, loops"
-        optimizer = _make_optimizer(mock_engine)
+    def test_extract_keywords_extracts_noun_phrases(self):
+        """extract_keywords should return a list of extracted phrase keywords via NLTK POS tagging."""
+        optimizer = _make_optimizer(MagicMock())
         result = optimizer.extract_keywords("Why is Python slow?")
         assert isinstance(result, list)
         assert "python" in result
-        assert "slow" in result
+
+    @pytest.mark.parametrize(
+        "query,expected_keywords",
+        [
+            (
+                "Where can I buy an expensive car in New York?",
+                ["expensive car", "new york"],
+            ),
+            (
+                "Where can I quickly find the best cheap laptops for gaming?",
+                ["best cheap laptops", "gaming"],
+            ),
+            (
+                "Looking for high speed wireless noise cancelling headphones",
+                ["high speed wireless noise cancelling headphones"],
+            ),
+        ],
+    )
+    def test_extract_keywords_sample_queries(self, query, expected_keywords):
+        """extract_keywords should accurately parse key noun phrases using NLTK."""
+        optimizer = _make_optimizer(MagicMock())
+        results = optimizer.extract_keywords(query)
+        assert results == expected_keywords
+
+
 
 
 # ---------------------------------------------------------------------------
@@ -186,7 +197,7 @@ class TestPrepareQuery:
         mock_engine = MagicMock()
         mock_engine.generate.side_effect = [
             "CONCEPTUAL",  # classify_intent
-            "slow python loops, python performance tips, optimize python code",  # multi_query
+            '{"standalone_query": "Why is Python slow?", "queries": ["slow python loops", "python performance tips", "optimize python code"]}',  # multi_query
         ]
         optimizer = _make_optimizer(mock_engine)
         result = await optimizer.prepare_query("Why is Python slow?", strategy="multi_query")
@@ -195,14 +206,14 @@ class TestPrepareQuery:
         assert result.dense_payload.queries is not None
         assert len(result.dense_payload.queries) > 0
         assert result.dense_payload.hyde_document is None
-        assert result.sparse_payload.keywords is None
+        assert result.sparse_payload.keywords == ["python"]
 
     async def test_conceptual_hyde_populates_dense_payload(self):
         """CONCEPTUAL intent + hyde strategy should populate dense_payload.hyde_document."""
         mock_engine = MagicMock()
         mock_engine.generate.side_effect = [
             "CONCEPTUAL",  # classify_intent
-            "Python can be slow due to the GIL and inefficient loops.",  # hyde
+            '{"standalone_query": "Why is Python slow?", "hypothetical_document": "Python can be slow due to the GIL and inefficient loops."}',  # hyde
         ]
         optimizer = _make_optimizer(mock_engine)
         result = await optimizer.prepare_query("Why is Python slow?", strategy="hyde")
@@ -211,10 +222,10 @@ class TestPrepareQuery:
         assert result.dense_payload.hyde_document is not None
         assert "Python" in result.dense_payload.hyde_document
         assert result.dense_payload.queries is None
-        assert result.sparse_payload.keywords is None
+        assert result.sparse_payload.keywords == ["python"]
 
     async def test_exact_match_returns_empty_payloads(self):
-        """EXACT_MATCH intent should skip generation and return empty dense and sparse payloads."""
+        """EXACT_MATCH intent should skip generation and populate sparse payload keywords."""
         mock_engine = MagicMock()
         mock_engine.generate.return_value = "EXACT_MATCH"
         optimizer = _make_optimizer(mock_engine)
@@ -223,7 +234,7 @@ class TestPrepareQuery:
         assert result.intent == "EXACT_MATCH"
         assert result.dense_payload.queries is None
         assert result.dense_payload.hyde_document is None
-        assert result.sparse_payload.keywords is None
+        assert isinstance(result.sparse_payload.keywords, list)
 
     async def test_greeting_returns_empty_payloads(self):
         """GREETING intent should skip all generation and return empty payloads."""
@@ -251,7 +262,7 @@ class TestPrepareQuery:
         mock_engine = MagicMock()
         mock_engine.generate.side_effect = [
             "CONCEPTUAL",
-            "query a, query b, query c",
+            '{"standalone_query": "test", "queries": ["query a", "query b", "query c"]}',
         ]
         optimizer = _make_optimizer(mock_engine)
         result = await optimizer.prepare_query("test", strategy="multi_query")
