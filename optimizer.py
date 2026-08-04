@@ -13,7 +13,13 @@ from schemas import ChatMessage, OptimizedQuery, DensePayload, SparsePayload
 
 
 def setup_nltk():
-    resources = ['punkt', 'punkt_tab', 'stopwords', 'averaged_perceptron_tagger', 'averaged_perceptron_tagger_eng']
+    resources = [
+        'punkt',
+        'punkt_tab',
+        'stopwords',
+        'averaged_perceptron_tagger',
+        'averaged_perceptron_tagger_eng',
+    ]
     for resource in resources:
         nltk.download(resource, quiet=True)
 
