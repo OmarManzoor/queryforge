@@ -10,12 +10,15 @@ class SemanticCache:
         self.embedding_model = SentenceTransformer(f"local_models/{EMBEDDING_MODEL}")
         self.threshold = threshold
         self.max_size = max_size
-        self.cache: List[Tuple[str, np.ndarray, Any]] = []
+        self.cache: List[Tuple[str, np.ndarray, float, Any]] = []
 
-    def _cosine_similarity(self, v1: np.ndarray, v2: np.ndarray) -> float:
-        norm_v1 = np.linalg.norm(v1)
-        norm_v2 = np.linalg.norm(v2)
-
+    def _cosine_similarity(
+        self,
+        v1: np.ndarray,
+        v2: np.ndarray,
+        norm_v1: float,
+        norm_v2: float,
+    ) -> float:
         if norm_v1 == 0 or norm_v2 == 0:
             return 0.0
 
@@ -27,9 +30,14 @@ class SemanticCache:
             query_vec = self.embedding_model.encode(user_query)
             best_sim = -np.inf
             cached_value = None
-
-            for _, cached_vec, value in self.cache:
-                similarity = self._cosine_similarity(query_vec, cached_vec)
+            query_vec_norm = np.linalg.norm(query_vec)
+            for _, cached_vec, cached_norm, value in self.cache:
+                similarity = self._cosine_similarity(
+                    v1=query_vec,
+                    v2=cached_vec,
+                    norm_v1=query_vec_norm,
+                    norm_v2=cached_norm,
+                )
                 if similarity > best_sim:
                     best_sim = similarity
                     cached_value = value
@@ -43,7 +51,7 @@ class SemanticCache:
             if len(self.cache) >= self.max_size:
                 self.cache.pop(0)
 
-            self.cache.append((user_query, query_vec, result))
+            self.cache.append((user_query, query_vec, query_vec_norm, result))
             return result
 
         return wrapper
