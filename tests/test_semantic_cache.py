@@ -3,13 +3,11 @@ import pytest
 from semantic_cache import SemanticCache
 
 
-# 1. Session fixture: loads SentenceTransformer ONCE for all tests
 @pytest.fixture(scope="session")
 def semantic_cache():
     return SemanticCache(threshold=0.86)
 
 
-# 2. Function fixture: automatically clears the cache before each test run
 @pytest.fixture(autouse=True)
 def reset_cache_state(semantic_cache):
     semantic_cache.cache.clear()
