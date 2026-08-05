@@ -9,10 +9,13 @@ Pre-retrieval query transformation middleware for RAG pipelines. QueryForge take
 Given a query, QueryForge:
 
 1. **Classifies intent** — `EXACT_MATCH`, `GREETING`, or `CONCEPTUAL`
-2. For **conceptual** queries, applies one of two strategies:
+2. For **conceptual** queries, resolves conversational context and applies one of three strategies:
    - `multi_query` — expands the query into 3 distinct search variations for dense retrieval
    - `hyde` — generates a hypothetical ideal document (HyDE) for dense retrieval
-3. Returns a structured JSON payload ready to feed into a retrieval layer
+   - `sub_queries` — decomposes a complex/comparative query into distinct sub-queries
+3. **Extracts key terms** — extracts key noun phrases (using POS-tagging via NLTK) for sparse/keyword retrieval
+4. **Caches semantically** — optionally caches queries using vector embeddings to bypass inference for similar recurring requests
+5. **Returns a structured payload** — outputs a unified JSON payload containing both dense and sparse representations ready for retrieval systems
 
 ---
 
