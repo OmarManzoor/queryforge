@@ -72,6 +72,22 @@ class TestSemanticCache:
                 "Convert pandas DataFrame to SQL table",
                 "Write a pandas DataFrame into a SQL database",
             ),
+            (
+                "How do you prepare fried chicken?",
+                "Method for cooking fried chicken",
+            ),
+            (
+                "How much distance is suitable for jogging when starting out",
+                "Best possible distance for jogging for beginners",
+            ),
+            (
+                "What is a good study schedule to prepare for a history exam?",
+                "How to best schedule studying for an exam related to history",
+            ),
+            (
+                "Suggest some nice places to visit in Paris",
+                "Good spots for tourists in Paris",
+            )
         ]
 
         for i, (query_orig, query_sim) in enumerate(queries, 1):
