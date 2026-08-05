@@ -21,14 +21,18 @@ Given a query, QueryForge:
 | Model | HuggingFace repo |
 |---|---|
 | Qwen2.5-3B-Instruct | `Qwen/Qwen2.5-3B-Instruct` |
+| Qwen2.5-3B-Instruct-4bit | `mlx-community/Qwen2.5-3B-Instruct-4bit` |
+| Qwen3-4B-Instruct-2507-4bit | `mlx-community/Qwen3-4B-Instruct-2507-4bit` |
 | Llama-3.2-3B-Instruct | `unsloth/Llama-3.2-3B-Instruct` |
+| Llama-3.2-3B-Instruct-4bit | `mlx-community/Llama-3.2-3B-Instruct-4bit` |
 
 ## Supported Providers
 
 | Provider | Description |
 |---|---|
-| `mlx` | Optimised inference on Apple Silicon via MLX |
+| `mlx` | Optimized inference on Apple Silicon via MLX |
 | `huggingface` | Standard HuggingFace `transformers` pipeline |
+| `llama` | Dedicated MLX engine for Llama models with thread-pinned execution to prevent GPU stream conflicts |
 
 ---
 
@@ -62,17 +66,17 @@ Select a model by number. It will be saved to `local_models/`.
 
 ## Running the server
 
-Open `server.py` and set the provider and model at the top of the file:
+Open `run_server.py` and set the provider and model at the top of the file:
 
 ```python
-PROVIDER = LLMProvider.MLX          # or LLMProvider.HUGGINGFACE
-MODEL    = LLMModel.QWEN_3B_INSTRUCT  # or LLMModel.LLAMA_3B_INSTRUCT
+PROVIDER = LLMProvider.MLX
+MODEL = LLMModel.QWEN_3B_INSTRUCT_4_BIT
 ```
 
 Then start the server:
 
 ```bash
-python server.py
+python run_server.py
 ```
 
 Server runs at **http://localhost:8000** — interactive docs at **http://localhost:8000/docs**.
@@ -86,11 +90,12 @@ Server runs at **http://localhost:8000** — interactive docs at **http://localh
 ```json
 {
   "query": "What causes transformer attention to fail on long sequences?",
-  "strategy": "multi_query"
+  "strategy": "multi_query",
+  "history": []
 }
 ```
 
-**Strategies:** `multi_query` (default) · `hyde`
+**Strategies:** `multi_query` (default) · `hyde` · `sub_queries`
 
 ### `GET /health`
 
@@ -102,11 +107,12 @@ Returns the current provider and model name.
 
 ```
 queryforge/
-├── server.py          # FastAPI server — entry point
+├── run_server.py      # FastAPI server — entry point
 ├── optimizer.py       # Core query transformation pipeline
 ├── llm.py             # HuggingFace & MLX engine wrappers
 ├── config.py          # Provider/model enums and constants
 ├── schemas.py         # Pydantic response models
 ├── prompts.yaml       # System prompts for each LLM task
+├── semantic_cache.py  # Semantic caching decorator using sentence-transformers
 └── download_model.py  # CLI tool to fetch models from HuggingFace
 ```
