@@ -6,7 +6,7 @@ from semantic_cache import SemanticCache
 # 1. Session fixture: loads SentenceTransformer ONCE for all tests
 @pytest.fixture(scope="session")
 def semantic_cache():
-    return SemanticCache(threshold=0.85)
+    return SemanticCache(threshold=0.86)
 
 
 # 2. Function fixture: automatically clears the cache before each test run
@@ -53,7 +53,7 @@ class TestSemanticCache:
                 "What is the training process of large language models?",
             ),
             (
-                "How to optimize Postgres queries?",
+                "How to optimize PostgresSQL queries?",
                 "Ways to speed up Postgres database queries",
             ),
             (
