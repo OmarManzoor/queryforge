@@ -15,12 +15,18 @@ class LLMModel:
     LLAMA_3B_INSTRUCT_4_BIT: str = "Llama-3.2-3B-Instruct-4bit"
 
 
+EMBEDDING_MODEL = "all-MiniLM-L6-v2"
+EMBEDDING_MODEL_BIG = "all-MiniLM-L12-v2"
+
+
 AVAILABLE_MODELS = [
     f"mlx-community/{LLMModel.QWEN_3B_INSTRUCT_4_BIT}",
     f"mlx-community/{LLMModel.QWEN3_4B_Instruct_4_BIT}",
     f"mlx-community/{LLMModel.LLAMA_3B_INSTRUCT_4_BIT}",
     f"Qwen/{LLMModel.QWEN_3B_INSTRUCT}",
     f"unsloth/{LLMModel.LLAMA_3B_INSTRUCT}",
+    f"sentence-transformers/{EMBEDDING_MODEL}",
+    f"sentence-transformers/{EMBEDDING_MODEL_BIG}"
 ]
 
 LOCAL_MODELS_DIR = "local_models"
