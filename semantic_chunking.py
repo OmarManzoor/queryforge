@@ -66,7 +66,7 @@ class SemanticSplitter:
         if len(sentences) == 1:
             return sentences
 
-        # 1. Build context buffers
+        # Build context buffers
         buffered = [
             " ".join(
                 sentences[
