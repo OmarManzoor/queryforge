@@ -106,7 +106,6 @@ class TestSemanticSplitter:
             )
         )
 
-
     def test_split_various_punctuation(
         self, default_splitter: SemanticSplitter
     ) -> None:
