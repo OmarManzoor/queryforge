@@ -34,10 +34,7 @@ class SemanticSplitter:
             end = min(len(sentences), i + self.buffer_size + 1)
             buffered_texts.append(" ".join(sentences[start:end]))
 
-        # Compute numpy vector embeddings for each context window
         embeddings = self.embedding_model.encode(buffered_texts, convert_to_numpy=True)
-
-        # Calculate pairwise cosine similarity using NumPy
         norms = np.linalg.norm(embeddings, axis=1, keepdims=True)
         norms[norms == 0] = 1e-10  # Avoid division by zero
         normalized_embeddings = embeddings / norms
