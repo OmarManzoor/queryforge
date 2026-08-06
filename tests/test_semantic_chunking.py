@@ -70,7 +70,7 @@ class TestSemanticSplitter:
         assert any("Machine learning" in chunk for chunk in chunks)
         assert any("Pizza" in chunk for chunk in chunks)
     
-    def test_split_semantic(self, default_splitter: SemanticSplitter):
+    def test_split_semantic_on_content(self, default_splitter: SemanticSplitter):
         text = """A large language model (LLM) is a type of machine learning model designed for natural language 
         processing tasks such as language generation. LLMs are language models with many parameters, and are
         trained with self-supervised learning on a vast amount of text.
