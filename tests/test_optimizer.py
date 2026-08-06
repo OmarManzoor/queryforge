@@ -1,12 +1,3 @@
-"""
-Unit tests for the QueryForge pre-retrieval middleware.
-
-Tests are organized into three suites:
-- TestSchemas: Pydantic schema validation
-- TestQueryOptimizerParsing: Stateless parsing logic (no LLM required)
-- TestQueryOptimizerIntegration: Full pipeline via mocked LLM engine
-"""
-
 import asyncio
 import re
 from unittest.mock import MagicMock, patch
